@@ -1,0 +1,38 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.cart-button {
+  background: #fd9;
+  display: block;
+  justify-content: center;
+  align-items: center;
+  margin: 50px 30px;
+  padding: 50px 150px;
+  font-size: 65px;
+  border-radius: 10px;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.cart-button:hover {
+  background: #000;
+  color: #fd9;
+}
+
+.goods-list {
+  width: 50vw;
+  border: 2px solid #000;
+  border-radius: 3px;
+  display: flex;
+  justify-content: space-between;
+  margin: 10px;
+  padding: 20px;
+}
+
+.title,
+.price {
+  font-size: 25px;
+  margin: 0 50px;
+}
