@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
+  <title></title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="calculator">
+    <label for="size"> Размер:</label>
+    <select id="size" name="size">
+      <option value="small">Маленький</option>
+      <option value="big">Большой</option>
+    </select>
+    <label for="sauce"> Соус:</label>
+    <select id="sauce" name="sauce">
+      <option value="cheese">Сыр</option>
+      <option value="salad">Салат</option>
+      <option value="potatoes">Картофель</option>
+    </select>
+    <label for="flavoring"> Приправа:</label>
+    <input type="checkbox" name="flavoring" id="flavoring">
+    <label for="mayo"> Майонез:</label>
+    <input type="checkbox" name="mayo" id="mayo">
+    <button id="submit">Рассчитать</button>
+    <div id="count"></div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
