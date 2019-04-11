@@ -1,3 +1,25 @@
+//ресурс с продуктами в корзине
+const API_URL = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses';
+//
+function makeGETRequest(url, callback) {
+  var xhr;
+
+  if (window.XMLHttpRequest) {
+    xhr = new XMLHttpRequest();
+  } else if (window.ActiveXObject) { 
+    xhr = new ActiveXObject("Microsoft.XMLHTTP");
+  }
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+      callback(xhr.responseText);
+    }
+  }
+
+  xhr.open('GET', url, true);
+  xhr.send();
+}
+
 //создание элемента корзины
 class ItemBasket {
   constructor(title, price) {
@@ -7,7 +29,7 @@ class ItemBasket {
   render() {
     return `
 <div class="goods-item">
-  <img src="img/${this.title}.jpg" alt="${this.title}" class="goods-img">
+  <img src="img/1.jpg" alt="${this.title}" class="goods-img">
   <a href="#" class="goods-title">${this.title}</a>
   <p class="goods-price">${this.price} ₽</p>
   <div class="goods-button">
@@ -29,28 +51,14 @@ class ItemBasket {
 }
 //корзина
 class Basket {
-  constructor() {
+  constructor(cb) {
     this.products = []; //масив продуктов
   }
-  fetchProducts() {
-    this.products = [
-      {
-        title: 'shirt',
-        price: 150
-      },
-      {
-        title: 'socks',
-        price: 50
-      },
-      {
-        title: 'jacket',
-        price: 350
-      },
-      {
-        title: 'shoes',
-        price: 250
-      },
-    ]; //эти данные берутся из бд и записываются в конструктор
+  fetchProducts(cb) {
+    makeGETRequest(`${API_URL}/catalogData.json`, (products) => {
+      this.products = JSON.parse(products);
+      cb();
+    })
   }
   render() {
     let listHtml = ''; //выводящая строчка
@@ -59,7 +67,7 @@ class Basket {
     let total = []; //масив только для цены
     //перебор массива продуктов с созданием нового массива
     this.products.forEach(item => {
-      const productItem = new ItemBasket(item.title, item.price); //создается новый массив
+      const productItem = new ItemBasket(item.product_name, item.price); //создается новый массив
       listHtml += productItem.render(); //в новый массив записывается строчка из ItemBasket с подставленными значениями
       total.push(item.price); //записываются цены в масив total
       money = total.reduce((sum, current) => {
@@ -70,14 +78,16 @@ class Basket {
     document.querySelector('.goods-list').innerHTML = listHtml + cost; //вывадим все а див
   }
 }
-
+//создаем новую карзину
 const list = new Basket();
-list.fetchProducts();
+  
+//открываем корзину поверх оасовного сайта
 buttonBasket.onclick = function () {
-  list.render();
+  list.fetchProducts( () => {list.render();});
   buttonBasket.className = "open-basket";
   buttonCloseBasket.className = "open-span";
 };
+//закрываем корзину
 buttonCloseBasket.onclick = function () {
   document.querySelector('.goods-list').innerHTML = "";
   buttonBasket.className = "close-basket";
