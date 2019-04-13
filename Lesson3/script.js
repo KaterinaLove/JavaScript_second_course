@@ -3,7 +3,6 @@ const API_URL = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-sto
 //проверка соединения
 function makeGETRequest(url) {
   var xhr;
-  console.log('Получение данных...');
   return new Promise((resolve, reject) => {//Ура промис для каталога готов)
     if (window.XMLHttpRequest) {
       xhr = new XMLHttpRequest();
@@ -11,16 +10,14 @@ function makeGETRequest(url) {
       xhr = new ActiveXObject("Microsoft.XMLHTTP");
     }
     xhr.onreadystatechange = function () {
-      console.log(xhr.status);
       if (xhr.readyState === 4) {//потому что он проходит цикл от 1 до 4
-        if (xhr.status == 200) {//дожидаемся паложительного результата
-          resolve(xhr.responseText);//возврощаем данные
+        if (xhr.status == 200) {//дожидаемся положительного результата
+          resolve(xhr.responseText);//возвращаем данные
         } else {
           reject(xhr.error);
         }
       }
     }
-
     xhr.open('GET', url, true);
     xhr.send();
   });
@@ -52,6 +49,60 @@ class Products {
     });
     document.querySelector('.products').innerHTML = listHtml;
   }
+}
+
+//корзина
+class Basket {
+  constructor() {
+    this.basket = []; //массив продуктов в корзине
+  }
+  fetchProducts(cb) {
+    makeGETRequest(`${API_URL}/catalogData.json`)
+      .then((basket) => {
+          // Колбэк для resolve()
+          this.basket = JSON.parse(basket);
+      cb();
+        },
+        () => {
+          console.log('error')
+          // Колбэк для reject()
+        });
+  }
+  render() {
+    let listHtml = ''; //выводящая строчка
+    let money; //общая сумма товара
+    let cost = ''; //выводит строчку с суммой
+    let total = []; //массив только для цены
+    //перебор массива продуктов с созданием нового массива
+    if (this.basket.length != 0) {
+      this.basket.forEach(item => {
+        const productItem = new ItemBasket(item.product_name, item.price); //создается новый массив
+        listHtml += productItem.render(); //в новый массив записывается строчка из ItemBasket с подставленными значениями
+        total.push(item.price); //записываются цены в массив total
+        money = total.reduce((sum, current) => {
+          return sum + current;
+        }, 0); //суммирует данные из массива
+        cost = productItem.costs(money); //выводит строчку с суммой
+      });
+      document.querySelector('.goods-list').innerHTML = listHtml + cost; //выводим всё а див
+    } else {
+      document.querySelector('.goods-list').innerHTML = 'Корзина пуста';
+    }
+  }
+  // для удаления из корзины(ошибка: это не функция)
+  from() {
+      makeGETRequest(`${API_URL}/deleteFromBasket.json`, (products) => {
+        console.log(JSON.parse)
+        //this.basket.splice(0, JSON.parse)
+      })
+    }
+    // для добавления в корзину(ошибка: это не функция)
+    in () {
+      makeGETRequest(`${API_URL}/addToBasket.json`, (products) => {
+        console.log(JSON)
+        //this.basket.push(JSON.parse)
+      })
+    }
 }
 
 //создание элемента корзины
@@ -88,53 +139,6 @@ class ItemBasket {
   }
 }
 
-
-//корзина
-class Basket {
-  constructor() {
-    this.basket = []; //массив продуктов в корзине
-  }
-  fetchProducts() {
-    makeGETRequest(`${API_URL}/getBasket.json`, (products) => {
-      this.basket = JSON.parse(products);
-    })
-  }
-  render() {
-    let listHtml = ''; //выводящая строчка
-    let money; //общая сумма товара
-    let cost = ''; //выводит строчку с суммой
-    let total = []; //массив только для цены
-    //перебор массива продуктов с созданием нового массива
-    if (this.basket.length != 0) {
-      this.basket.contents.forEach(item => {
-        const productItem = new ItemBasket(item.product_name, item.price); //создается новый массив
-        listHtml += productItem.render(); //в новый массив записывается строчка из ItemBasket с подставленными значениями
-        total.push(item.price); //записываются цены в массив total
-        money = total.reduce((sum, current) => {
-          return sum + current;
-        }, 0); //суммирует данные из массива
-        cost = productItem.costs(money); //выводит строчку с суммой
-      });
-      document.querySelector('.goods-list').innerHTML = listHtml + cost; //выводим всё а див
-    } else {
-      document.querySelector('.goods-list').innerHTML = 'Корзина пуста';
-    }
-  }
-  // для удаления из корзины(ошибка: это не функция)
-  from() {
-      makeGETRequest(`${API_URL}/deleteFromBasket.json`, (products) => {
-        console.log(JSON.parse)
-        //this.basket.splice(0, JSON.parse)
-      })
-    }
-    // для добавления в корзину(ошибка: это не функция)
-    in () {
-      makeGETRequest(`${API_URL}/addToBasket.json`, (products) => {
-        console.log(JSON)
-        //this.basket.push(JSON.parse)
-      })
-    }
-}
 //создание каталога продуктов
 const prod = new Products();
 prod.fetchProducts(() => {
@@ -142,10 +146,13 @@ prod.fetchProducts(() => {
 });
 //создаем новую корзину
 const list = new Basket();
-list.fetchProducts();
+//list.fetchProducts();
 //открываем корзину поверх основного сайта
 buttonBasket.onclick = function () {
-  list.render();
+  list.fetchProducts(() => {
+    list.render();
+  });
+
   buttonBasket.className = "open-basket";
   buttonCloseBasket.className = "open-span";
 };
