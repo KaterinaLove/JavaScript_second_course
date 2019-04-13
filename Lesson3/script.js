@@ -1,31 +1,64 @@
 //ресурс с JSON пакетами
 const API_URL = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses';
 //проверка соединения
-function makeGETRequest(url, callback) {
+function makeGETRequest(url) {
   var xhr;
   console.log('Получение данных...');
-
-  if (window.XMLHttpRequest) {
-    xhr = new XMLHttpRequest();
-  } else if (window.ActiveXObject) {
-    xhr = new ActiveXObject("Microsoft.XMLHTTP");
-  }
-
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState === 4) {
-      callback(xhr.responseText);
+  return new Promise((resolve, reject) => {//Ура промис для каталога готов)
+    if (window.XMLHttpRequest) {
+      xhr = new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+      xhr = new ActiveXObject("Microsoft.XMLHTTP");
     }
-  }
+    xhr.onreadystatechange = function () {
+      console.log(xhr.status);
+      if (xhr.readyState === 4) {//потому что он проходит цикл от 1 до 4
+        if (xhr.status == 200) {//дожидаемся паложительного результата
+          resolve(xhr.responseText);//возврощаем данные
+        } else {
+          reject(xhr.error);
+        }
+      }
+    }
 
-  xhr.open('GET', url, true);
-  xhr.send();
+    xhr.open('GET', url, true);
+    xhr.send();
+  });
+}
+
+//продукты
+class Products {
+  constructor() {
+    this.products = []; //массив продуктов
+  }
+  fetchProducts(cb) {
+    makeGETRequest(`${API_URL}/catalogData.json`)
+      .then((products) => {
+          // Колбэк для resolve()
+          this.products = JSON.parse(products);
+          cb();
+        },
+        () => {
+          console.log('error')
+          // Колбэк для reject()
+        });
+  }
+  render() {
+    let listHtml = ''; //выводящая строчка
+    //перебор массива продуктов с созданием нового массива
+    this.products.forEach(item => {
+      const productItem = new ItemBasket(item.product_name, item.price); //создается новый массив
+      listHtml += productItem.renderProducts();
+    });
+    document.querySelector('.products').innerHTML = listHtml;
+  }
 }
 
 //создание элемента корзины
 class ItemBasket {
   constructor(title, price) {
-    this.title = title; //имя элемента берется из бд(но у нас массив)
-    this.price = price; //цена элемента берется из бд
+    this.title = title; //имя элемента 
+    this.price = price; //цена элемента 
   }
   //вывод элемента(продукта)
   render() {
@@ -48,39 +81,18 @@ class ItemBasket {
   //Вывод каталога продуктов
   renderProducts() {
     return `<a href="#" class="goods-title">${this.title}</a>
-<button type="submit" class="goods-number" id="inBasket" onclick="list.in();">
+<button type="submit" class="goods-number" id="${this.price}" onclick="list.in(event);">
 В корзину
 </button>
   <p class="goods-price">${this.price} ₽</p>`
   }
 }
 
-//продукты
-class Products {
-  constructor() {
-    this.products = []; //масив продуктов
-  }
-  fetchProducts(cb) {
-    makeGETRequest(`${API_URL}/catalogData.json`, (products) => {
-      this.products = JSON.parse(products);
-      cb();
-    })
-  }
-  render() {
-    let listHtml = ''; //выводящая строчка
-    //перебор массива продуктов с созданием нового массива
-    this.products.forEach(item => {
-      const productItem = new ItemBasket(item.product_name, item.price); //создается новый массив
-      listHtml += productItem.renderProducts();
-    });
-    document.querySelector('.products').innerHTML = listHtml;
-  }
-}
 
 //корзина
 class Basket {
   constructor() {
-    this.basket = []; //масив продуктов в карзине
+    this.basket = []; //массив продуктов в корзине
   }
   fetchProducts() {
     makeGETRequest(`${API_URL}/getBasket.json`, (products) => {
@@ -91,19 +103,19 @@ class Basket {
     let listHtml = ''; //выводящая строчка
     let money; //общая сумма товара
     let cost = ''; //выводит строчку с суммой
-    let total = []; //масив только для цены
+    let total = []; //массив только для цены
     //перебор массива продуктов с созданием нового массива
     if (this.basket.length != 0) {
       this.basket.contents.forEach(item => {
         const productItem = new ItemBasket(item.product_name, item.price); //создается новый массив
         listHtml += productItem.render(); //в новый массив записывается строчка из ItemBasket с подставленными значениями
-        total.push(item.price); //записываются цены в масив total
+        total.push(item.price); //записываются цены в массив total
         money = total.reduce((sum, current) => {
           return sum + current;
-        }, 0); //суммирует данные из масива
+        }, 0); //суммирует данные из массива
         cost = productItem.costs(money); //выводит строчку с суммой
       });
-      document.querySelector('.goods-list').innerHTML = listHtml + cost; //вывадим все а див
+      document.querySelector('.goods-list').innerHTML = listHtml + cost; //выводим всё а див
     } else {
       document.querySelector('.goods-list').innerHTML = 'Корзина пуста';
     }
@@ -111,11 +123,11 @@ class Basket {
   // для удаления из корзины(ошибка: это не функция)
   from() {
       makeGETRequest(`${API_URL}/deleteFromBasket.json`, (products) => {
-        console.log(JSON)
+        console.log(JSON.parse)
         //this.basket.splice(0, JSON.parse)
       })
     }
-    // для добовления в корзину(ошибка: это не функция)
+    // для добавления в корзину(ошибка: это не функция)
     in () {
       makeGETRequest(`${API_URL}/addToBasket.json`, (products) => {
         console.log(JSON)
@@ -137,7 +149,7 @@ buttonBasket.onclick = function () {
   buttonBasket.className = "open-basket";
   buttonCloseBasket.className = "open-span";
 };
-//программа не знает о их существавании
+//программа не знает об их существовании
 //fromBasket.onclick = function () {
 //  list.from();
 //}
