@@ -23,10 +23,25 @@ function makeGETRequest(url) {
   });
 }
 //отправка данных
-function spendGETRequest(url) {
-  //тут ajax, но пока буду работать с обычным массивом
-}
-
+function spendGETRequest(url, obj) {
+    var xhr;
+    if (window.XMLHttpRequest) {
+      xhr = new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+      xhr = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 2) { 
+        if (xhr.status == 200) { 
+          resolve(xhr.responseText); 
+        } else {
+          reject(xhr.error);
+        }
+      }
+    }
+    xhr.open('POST', url, true);
+    xhr.send(obj);
+  };
 
 //продукты
 class Products {
@@ -63,12 +78,11 @@ class Basket {
   constructor() {
     this.basket = []; //массив продуктов в корзине
   }
-  fetchProducts(cb) {
+  fetchProducts() {
     makeGETRequest(`${API_URL}/catalogData.json`)
       .then((basket) => {
           // Колбэк для resolve()
           this.basket = JSON.parse(basket);
-          cb();
         },
         () => {
           console.log('error')
@@ -105,8 +119,18 @@ class Basket {
     }
   // для добавления в корзину
   in(event) {
-    this.basket.push(prod.products[event.target.id]);
-    this.render();
+    let obj = prod.products[event.target.id];
+    this.basket.push(obj);//для локалки, потом уберется
+    JSON.stringify(obj);//подготовка для отправки на сервер
+//    spendGETRequest(`${API_URL}/addToBasket.json`, obj)
+//      .then((basket) => {
+//          // Колбэк для resolve()
+//          this.basket = JSON.parse(basket);
+//        },
+//        () => {
+//          console.log('error')
+//          // Колбэк для reject()
+//        });
   }
 }
 
@@ -152,13 +176,10 @@ prod.fetchProducts(() => {
 });
 //создаем новую корзину
 const list = new Basket();
-//list.fetchProducts();
 //открываем корзину поверх основного сайта
+list.fetchProducts();
 buttonBasket.onclick = function () {
-  list.fetchProducts(() => {
-    list.render();
-  });
-
+  list.render();
   buttonBasket.className = "open-basket";
   buttonCloseBasket.className = "open-span";
 };
